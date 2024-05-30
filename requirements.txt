@@ -19,3 +19,4 @@ tld==0.13
 tomli==2.0.1
 urllib3==2.2.1
 whois==1.20240129.2
+tinydb==3.8.1

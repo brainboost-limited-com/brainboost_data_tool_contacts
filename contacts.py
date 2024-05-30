@@ -1,65 +1,66 @@
 from brainboost_data_tools_json_package.JSonProcessor import JSonProcessor
 from brainboost_data_tools_contacts.EmailProcessor import EmailProcessor
-from brainboost_data_tools_contacts import EmailProcessor
+from brainboost_data_tools_contacts.NameProcessor import NameProcessor
 
 import os
 import json
-from tinydb import TinyDB, where
+import csv
+from tinydb import TinyDB, Query
+from progress.bar import Bar
+import sys
 
-
-data_source = '/brainboost/brainboost_data/data_tools/tools_goldenthinkerextractor_dataprocessing/resources/resources_data/data_subjective'
+start_path = '/brainboost/brainboost_data/data_tools/tools_goldenthinkerextractor_dataprocessing/resources/resources_data/data_subjective'
 db_path = '/brainboost/brainboost_data/data_storage/storage_user_agents_database.json'
 
+# CSV header
+facebook_ads_audience_header_csv = 'email,fn,ln\n'
 
-facebook_ads_sample = 'email,email,email,phone,phone,phone,madid,fn,ln,zip,ct,st,country,dob,doby,gen,age,uid,value'
+# Initialize JSonProcessor and load data into TinyDB
+jp = JSonProcessor()
+brainboost_data_storage_local_contacts = jp.to_tinydb(from_path=start_path, to_tinydb_json_file=db_path, log=True)
 
-
-
-def insert_json_to_tinydb(db_path, start_path):
-    # Initialize TinyDB database
-    db = TinyDB(db_path)
-
-    def scan_and_insert(path):
-        # Iterate over all items in the directory
-        for item in os.listdir(path):
-            item_path = os.path.join(path, item)
-            if os.path.isdir(item_path):
-                # If the item is a directory, recursively scan it
-                scan_and_insert(item_path)
-            elif item_path.endswith('.json'):
-                # If the item is a .json file, read and insert its content into TinyDB
-                with open(item_path, 'r', encoding='utf-8') as json_file:
-                    try:
-                        data = json.load(json_file)
-                        if isinstance(data, list):
-                            db.insert_multiple(data)
-                        else:
-                            db.insert(data)
-                    except json.JSONDecodeError:
-                        print(f"Error decoding JSON from file: {item_path}")
-
-    # Start the recursive scan from the given path
-    scan_and_insert(start_path)
-
-
-
-
-
-json_processor = JSonProcessor()
-json_data = json_processor.load_json_files_recursively(data_source)
-
-
+# Initialize processors
 email_processor = EmailProcessor()
+name_processor = NameProcessor()
 
-possible_emails = email_processor.generate_email_variations()
+# Prepare CSV data
+csv_lines = [facebook_ads_audience_header_csv.strip()]  # Start with the header
+
+contacts = brainboost_data_storage_local_contacts.all()
+contact_query = Query()
+
+# Progress bar setup
+bar = Bar('Processing Contacts ', max=len(contacts))
+
+for contact in contacts:
+    #possible_emails = email_processor.generate_email_variations(company=contact.get('company'), name=contact.get('name'))
+    company = contact.get('company').replace(' ','')
+    name = contact.get('name').replace(' ','')
+    possible_emails = name + '@' + company + '.com'
+    if possible_emails:
+        first_possible_email = possible_emails[0]
+        brainboost_data_storage_local_contacts.update({'email': first_possible_email}, (contact_query.name == contact.get('name')) & (contact_query.company == contact.get('company')))
+        parsed_name = name_processor.extract_first_last_name(contact.get('name'))
+        fn = parsed_name[0] if parsed_name else ''
+        ln = parsed_name[1] if parsed_name else ''
+        csv_line = f"{first_possible_email},{fn},{ln}"
+        csv_lines.append(csv_line)
+    bar.next()
+    sys.stdout.flush()  # Ensure the output is flushed
+
+bar.finish()
 
 
-for email_variation in possible_emails:
+# Progress bar setup
+bar_1 = Bar('Processing Contacts ', max=len(contacts))
 
-    updated_records = json_processor.add_calculated_field_to_the_objects_from_an_array(
-        json_data,
-        'email',
-        email_variation
-    )
+# Write to CSV file
+csv_file_path = 'brainboost_marketing_audience.csv'
+with open(csv_file_path, 'w', newline='') as csvfile:
+    csvwriter = csv.writer(csvfile)
+    for line in csv_lines:
+        csvwriter.writerow(line.split(','))
 
+bar_1.finish()
 
+print(f"CSV file '{csv_file_path}' has been created.")
