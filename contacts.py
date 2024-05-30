@@ -9,8 +9,8 @@ from tinydb import TinyDB, Query
 from progress.bar import Bar
 import sys
 
-start_path = '/brainboost/brainboost_data/data_storage/storage_local/storage_contacts'
-db_path    = '/brainboost/brainboost_data/data_storage/storage_local/storage_contacts/contacts.json'
+start_path = '/brainboost/brainboost_data/data_storage/storage_local/brainboost_data_storage_local_contacts'
+db_path    = '/brainboost/brainboost_data/data_storage/storage_local/brainboost_data_storage_local_contacts/contacts.json'
 
 # CSV header
 facebook_ads_audience_header_csv = 'email,fn,ln\n'
