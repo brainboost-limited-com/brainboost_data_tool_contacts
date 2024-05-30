@@ -13,7 +13,7 @@ start_path = '/brainboost/brainboost_data/data_storage/storage_local/brainboost_
 db_path    = '/brainboost/brainboost_data/data_storage/storage_local/brainboost_data_storage_local_contacts/contacts.json'
 
 # CSV header
-facebook_ads_audience_header_csv = 'email,fn,ln\n'
+facebook_ads_audience_header_csv = 'email,email,fn,ln\n'
 
 # Initialize JSonProcessor and load data into TinyDB
 jp = JSonProcessor()
@@ -36,9 +36,10 @@ for contact in contacts:
     #possible_emails = email_processor.generate_email_variations(company=contact.get('company'), name=contact.get('name'))
     company = contact.get('company').replace(' ','')
     name = contact.get('name').replace(' ','')
-    possible_emails = name + '@' + company + '.com'
+    possible_emails =  [ name + '@' + company + '.com', name + '@' + 'gmail.com' ]
     if possible_emails:
         first_possible_email = possible_emails[0]
+        second_possible_email = possible_emails[1]
         brainboost_data_storage_local_contacts.update({'email': first_possible_email}, (contact_query.name == contact.get('name')) & (contact_query.company == contact.get('company')))
         parsed_name = name_processor.extract_first_last_name(contact.get('name'))
         fn = parsed_name[0] if parsed_name else ''
