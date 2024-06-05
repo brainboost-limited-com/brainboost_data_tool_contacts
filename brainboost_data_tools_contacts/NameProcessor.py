@@ -1,32 +1,15 @@
 class NameProcessor:
-
-
-    def __init__(self) -> None:
-        pass
-
-
-    def extract_first_last_name(self, full_name):
-        # Split the full name into parts based on spaces
-        if full_name:
-            name_parts = full_name.split(' ')
-
-            if len(name_parts)==2:
-                first_name = name_parts[0]
-                last_name = name_parts[1]
-            else:
-                if len(name_parts)==3:
-                    first_name = ' '.join(name_parts[0:2])
-                    last_name = ' '.join(name_parts[-1])
-                else:
-                    if len(name_parts)==4:
-                        first_name = ' '.join(name_parts[0:2])
-                        last_name = ' '.join(name_parts[2:4])
-                    else:
-                        if len(name_parts)==5:
-                            first_name = ' '.join(name_parts[0:2])
-                            last_name = ' '.join(name_parts[2:5])
-
-            return first_name, last_name
-        else:
-            return '',''
-
+    def extract_first_last_name(self, name):
+        first_name = ""
+        last_name = ""
+        try:
+            # Assuming names are in the format "First Last"
+            parts = name.split()
+            if len(parts) > 1:
+                first_name = parts[0]
+                last_name = parts[-1]
+            elif len(parts) == 1:
+                first_name = parts[0]
+        except Exception as e:
+            print(f"Error extracting first and last name: {e}")
+        return first_name, last_name
